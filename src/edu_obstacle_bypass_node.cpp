@@ -34,7 +34,7 @@ void scanCallback(const sensor_msgs::LaserScanConstPtr& scan_msg)
     int dir = (rand() % 2 == 0) ? 1 : -1;                               // Initialize the direction of the manoeuvre
     float ang_vel = 1 * dir;                                          // Initialize the angular velocity [rad/s]
     float target_angle = (((double) rand() / (RAND_MAX)) * M_PI_2 + M_PI_2) * dir;   // Initialize the target angle [rad]
-    float pub_time = target_angle / ang_vel;                            // Initialize the publishing time [s]
+    float time = target_angle / ang_vel;                            // Initialize the publishing time [s]
     std::cout << "pub_time: " << pub_time << std::endl;
     std::cout << "scan[front_index]: " << scan[front_index] << std::endl;
 
@@ -42,14 +42,11 @@ void scanCallback(const sensor_msgs::LaserScanConstPtr& scan_msg)
     msg.angular.z = ang_vel;
     
     ros::Time beginTime = ros::Time::now();
-    ros::Duration secondsIWantToSendMessagesFor = ros::Duration(pub_time); // [s]
-    ros::Time endTime = beginTime + secondsIWantToSendMessagesFor;
+    ros::Duration pub_time = ros::Duration(time); // [s]
+    ros::Time endTime = beginTime + pub_time;
     while(ros::Time::now() < endTime )
     {
         vel_pub.publish(msg);
-
-        // Time between messages, so you don't blast out an thousands of 
-        // messages in your 3 secondperiod
         ros::Duration(0.1).sleep();
     }
   }
