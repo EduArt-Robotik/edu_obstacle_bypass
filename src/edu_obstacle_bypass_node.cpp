@@ -17,45 +17,8 @@ ros::Subscriber scan_sub;   // Initialize the Subscriber
  */
 void scanCallback(const sensor_msgs::LaserScanConstPtr& scan_msg)
 {
-  std::vector<float> scan = scan_msg->ranges;   // Collecting the meassured ranges from the arriving scan data
-  geometry_msgs::Twist msg;                   // Initialization of the turning angle
-
-  int front_index = 1;          // Initialize the Index of the measurement in front of the robot
-  float front_range = 0.5;                      // Initialize the maximum range [m] before the obstacle for triggering the manoeuvre
-  
-  /**
-    * The publish() function is how you send messages. The parameter
-    * is the message object. The type of this object must agree with the type
-    * given as a template parameter to the advertise() call.
-    */
-
-  if (scan[front_index] < front_range)
-  {
-    int dir = (rand() % 2 == 0) ? 1 : -1;                               // Initialize the direction of the manoeuvre
-    float ang_vel = 0.3 * dir;                                          // Initialize the angular velocity [rad/s]
-    float target_angle = (((double) rand() / (RAND_MAX)) * M_PI_2 + M_PI_2) * dir;   // Initialize the target angle [rad]
-    float time = target_angle / ang_vel;                            // Initialize the publishing time [s]
-    std::cout << "pub_time: " << pub_time << std::endl;
-    std::cout << "scan[front_index]: " << scan[front_index] << std::endl;
-
-    msg.linear.x = 0;
-    msg.angular.z = ang_vel;
-    
-    ros::Time beginTime = ros::Time::now();
-    ros::Duration pub_time = ros::Duration(time); // [s]
-    ros::Time endTime = beginTime + pub_time;
-    while(ros::Time::now() < endTime )
-    {
-        vel_pub.publish(msg);
-        ros::Duration(0.1).sleep();
-    }
-  }
-  else
-  {
-    msg.linear.x = 0.2;
-    msg.angular.z = 0;
-    vel_pub.publish(msg);
-  }
+  float range_ahead = scan_msg->ranges[0];
+  // float range_ahead = scan_msg->ranges[msg.ranges.size() / 2];
 }
 
 int main(int argc, char **argv)
@@ -71,15 +34,72 @@ int main(int argc, char **argv)
   * publish on a given topic name: the generated twist-msg to move your robot.
   * Tell the master that we are going to be publishing every 10ms the message of type geometry_msgs/Twist on the topic /cmd_vel.
   */
-  vel_pub = n.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
+  vel_pub = n.advertise<geometry_msgs::Twist>("/vel/teleop", 1);
 
   /** SUBSCRIBER
   * The subscribe() call is how you tell ROS that you want to receive messages
   * on a given topic.  Messages are passed to a callback function, here
   * called  scanCallback to determine the target angle.
   */
-  scan_sub = n.subscribe("safee/lidar_scan", 1000, scanCallback);
+  scan_sub = n.subscribe("/front/scan", 1000, scanCallback);
 
-  // Calling the Callbacks (once)
-  ros::spin();
+
+  ros::Time state_change_time = ros::Time::now(); // Initialize the time of the last state change
+  ros::Rate loop_rate(10);                        // Set the loop rate to 10 Hz
+
+  float range_ahead = 0.0;                        // Initialize the range ahead to 0.0
+  float min_range_ahead = 0.5;                    // Set the minimum range ahead in meters
+  bool obstacle_detected = false;                 // Initialize the obstacle detected flag to false
+
+  float min_spin_duration = 5.0;                  // Set the minimum spin duration in seconds
+  float max_spin_duration = 10.0;                 // Set the maximum spin duration in seconds
+  float spin_duration = 0.0;                      // Initialize the spin duration to 0.0 seconds
+  int spin_direction = 1;                         // Initialize the spin direction to 1 (clockwise)
+
+  float angular_velocity = 0.5;                   // Set the angular velocity in rad/s
+  float linear_velocity = 0.5;                    // Set the linear velocity in 0.0 m/s
+
+  while (ros::ok())
+  {
+    // Check if the obstacle is detected
+    if (!obstacle_detected)
+    {
+      std::cout << "Driving forward. Range ahead [m]: " << range_ahead << std::endl;
+      if (range_ahead < min_range_ahead || ros::Time::now() > state_change_time)
+      {
+        obstacle_detected = true;
+        state_change_time = ros::Time::now() + ros::Duration(0.5);
+      }      
+    }
+    else
+    {
+      std::cout << "Obstacle detected & turning. Range ahead [m]: " << range_ahead << std::endl;
+      if (ros::Time::now() > state_change_time)
+      {
+        obstacle_detected = false;
+        // Set the spin_duration to a random value between min_spin_duration and max_spin_duration [s]
+        spin_duration = ((float)rand() / (float)RAND_MAX * (max_spin_duration - min_spin_duration)) + min_spin_duration;
+        // Set the spin_direction to 1 (clockwise) or -1 (counter-clockwise)
+        spin_direction = ((float)rand() / (float)RAND_MAX * 2.0) - 1.0;
+        state_change_time = ros::Time::now() + ros::Duration(spin_duration);
+      }
+    }
+    
+    geometry_msgs::Twist msg; // Create a message of type geometry_msgs/Twist to send cmd_vel data to the robot
+
+    if (!obstacle_detected)
+    {
+      msg.linear.x = linear_velocity;
+      msg.angular.z = 0.0;
+    }
+    else
+    {
+      msg.linear.x = 0.0;
+      msg.angular.z = angular_velocity;
+    }
+
+    vel_pub.publish(msg); // Publish the message
+    ros::spinOnce();      // Spin once to handle callbacks
+    loop_rate.sleep();    // Sleep for the rest of the cycle
+  }
 }
