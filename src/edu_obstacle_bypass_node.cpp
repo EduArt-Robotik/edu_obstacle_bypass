@@ -21,7 +21,7 @@ void scanCallback(const sensor_msgs::LaserScanConstPtr& scan_msg)
   geometry_msgs::Twist msg;                   // Initialization of the turning angle
 
   int front_index = 1;          // Initialize the Index of the measurement in front of the robot
-  float front_range = 0.1;                      // Initialize the maximum range [m] before the obstacle for triggering the manoeuvre
+  float front_range = 0.5;                      // Initialize the maximum range [m] before the obstacle for triggering the manoeuvre
   
   /**
     * The publish() function is how you send messages. The parameter
@@ -32,7 +32,7 @@ void scanCallback(const sensor_msgs::LaserScanConstPtr& scan_msg)
   if (scan[front_index] < front_range)
   {
     int dir = (rand() % 2 == 0) ? 1 : -1;                               // Initialize the direction of the manoeuvre
-    float ang_vel = 1 * dir;                                          // Initialize the angular velocity [rad/s]
+    float ang_vel = 0.3 * dir;                                          // Initialize the angular velocity [rad/s]
     float target_angle = (((double) rand() / (RAND_MAX)) * M_PI_2 + M_PI_2) * dir;   // Initialize the target angle [rad]
     float time = target_angle / ang_vel;                            // Initialize the publishing time [s]
     std::cout << "pub_time: " << pub_time << std::endl;
@@ -52,7 +52,7 @@ void scanCallback(const sensor_msgs::LaserScanConstPtr& scan_msg)
   }
   else
   {
-    msg.linear.x = 2.0;
+    msg.linear.x = 0.2;
     msg.angular.z = 0;
     vel_pub.publish(msg);
   }
