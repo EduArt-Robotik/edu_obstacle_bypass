@@ -37,7 +37,7 @@ int main(int argc, char **argv)
   ros::Publisher vel_pub = n.advertise<geometry_msgs::Twist>("/vel/teleop", 1);
 
   // Create a subscriber for scan data
-  ros::Subscriber scan_sub = n.subscribe("/back/scan", 1000, &ScanListener::scanCallback, &scan_listener);
+  ros::Subscriber scan_sub = n.subscribe("/front/scan", 1000, &ScanListener::scanCallback, &scan_listener);
 
   ros::Time state_change_time = ros::Time::now(); // Initialize the time of the last state change
   ros::Rate loop_rate(10);                        // Set the loop rate to 10 Hz
