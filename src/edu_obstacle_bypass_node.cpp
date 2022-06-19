@@ -12,14 +12,26 @@ class ScanListener
 {
   public:
     double range_ahead;
+    double range_left;
+    double range_right;
 
     void scanCallback(const sensor_msgs::LaserScanConstPtr& scan_msg);
 };
 
 void ScanListener::scanCallback(const sensor_msgs::LaserScanConstPtr& scan_msg)
 {
-  range_ahead = scan_msg->ranges[0];
-  // range_ahead = scan_msg->ranges[msg.ranges.size() / 2];
+  range_ahead = scan_msg->ranges[0];                              // Range of the laser beam in front of the robot
+  
+  /*
+  * If the robot is seeing itself while looking left or right, change the following factors as follows:
+  * for left_index = decrease it to like 0.2 to 0.15
+  * for right_index = increase it to like 0.8 to 0.85
+  */
+  int left_index = (int) round(scan_msg->ranges.size() * 0.25);   // Index of the leftmost range
+  int right_index = (int) round(scan_msg->ranges.size() * 0.75);  // Index of the rightmost range
+  
+  range_left = scan_msg->ranges[left_index];                      // Range of the leftmost range
+  range_right = scan_msg->ranges[right_index];                    // Range of the rightmost range
 }
 
 int main(int argc, char **argv)
@@ -44,6 +56,8 @@ int main(int argc, char **argv)
 
   scan_listener.range_ahead = 0.0;                                      // Initialize the range ahead to 0.0
   float min_range_ahead = 1.2;                                          // Set the minimum range ahead in meters
+  float min_range_left = 0.5;                                           // Set the minimum range left in meters
+  float min_range_right = 0.5;                                          // Set the maximum range right in meters
   const float DEG_TO_RAD = M_PI / 180.0;                                // Convert degrees to radians
   bool obstacle_detected = false;                                       // Initialize the obstacle detected flag to false
 
@@ -64,7 +78,7 @@ int main(int argc, char **argv)
     if (!obstacle_detected)
     {
       std::cout << "Driving forward. Range ahead [m]: " << scan_listener.range_ahead << std::endl;
-      if (scan_listener.range_ahead < min_range_ahead )
+      if (scan_listener.range_ahead < min_range_ahead || scan_listener.range_left < min_range_left || scan_listener.range_right < min_range_right)
       {
         obstacle_detected = true;
         // Set the spin_duration to a random value between min_spin_duration and max_spin_duration [s]
@@ -74,7 +88,11 @@ int main(int argc, char **argv)
     }
     else
     {
-      std::cout << "Obstacle detected & turning. Range ahead [m]: " << scan_listener.range_ahead << std::endl;
+      // Console log for debugging while testing the two newly considered scan ranges
+      std::cout << "Obstacle detected & turning." << std::endl;
+      std::cout << "Range ahead [m]: " << scan_listener.range_ahead << std::endl;
+      std::cout << "Range left [m]: " << scan_listener.range_left << std::endl;
+      std::cout << "Range right [m]: " << scan_listener.range_right << std::endl;
       if (ros::Time::now() > state_change_time)
       {
         obstacle_detected = false;
