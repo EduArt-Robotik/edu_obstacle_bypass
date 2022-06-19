@@ -39,20 +39,24 @@ int main(int argc, char **argv)
   // Create a subscriber for scan data
   ros::Subscriber scan_sub = n.subscribe("/front/scan", 1000, &ScanListener::scanCallback, &scan_listener);
 
-  ros::Time state_change_time = ros::Time::now(); // Initialize the time of the last state change
-  ros::Rate loop_rate(10);                        // Set the loop rate to 10 Hz
+  ros::Time state_change_time = ros::Time::now();                       // Initialize the time of the last state change
+  ros::Rate loop_rate(10);                                              // Set the loop rate to 10 Hz
 
-  scan_listener.range_ahead = 0.0;                // Initialize the range ahead to 0.0
-  float min_range_ahead = 0.5;                    // Set the minimum range ahead in meters
-  bool obstacle_detected = false;                 // Initialize the obstacle detected flag to false
+  scan_listener.range_ahead = 0.0;                                      // Initialize the range ahead to 0.0
+  float min_range_ahead = 1.2;                                          // Set the minimum range ahead in meters
+  const float DEG_TO_RAD = M_PI / 180.0;                                // Convert degrees to radians
+  bool obstacle_detected = false;                                       // Initialize the obstacle detected flag to false
 
-  float min_spin_duration = 2.0;                  // Set the minimum spin duration in seconds
-  float max_spin_duration = 5.0;                 // Set the maximum spin duration in seconds
-  float spin_duration = 0.0;                      // Initialize the spin duration to 0.0 seconds
-  float spin_direction = 1.0;                         // Initialize the spin direction to 1 (clockwise)
+  float angular_velocity = 0.5;                                         // Set the angular velocity in rad/s
+  float linear_velocity = 0.5;                                          // Set the linear velocity in 0.0 m/s
 
-  float angular_velocity = 0.5;                   // Set the angular velocity in rad/s
-  float linear_velocity = 0.5;                    // Set the linear velocity in 0.0 m/s
+  float min_spin_deg = 90.00 * DEG_TO_RAD;                              // Set the minimum spin angle in degrees
+  float max_spin_deg = 160.00 * DEG_TO_RAD;                             // Set the maximum spin angle in degrees
+
+  float min_spin_duration = min_spin_duration / angular_velocity;       // Set the minimum spin duration in seconds
+  float max_spin_duration = max_spin_duration / angular_velocity;       // Set the maximum spin duration in seconds
+  float spin_duration = 0.0;                                            // Initialize the spin duration to 0.0 seconds
+  float spin_direction = 1.0;                                           // Initialize the spin direction to 1 (clockwise)
 
   while (ros::ok())
   {
@@ -63,8 +67,6 @@ int main(int argc, char **argv)
       if (scan_listener.range_ahead < min_range_ahead )
       {
         obstacle_detected = true;
-        // Set the spin_direction to 1 (clockwise) or -1 (counter-clockwise)
-        spin_direction = (rand() % 2 == 0) ? 1 : -1;
         // Set the spin_duration to a random value between min_spin_duration and max_spin_duration [s]
         spin_duration = ((float)rand() / (float)RAND_MAX * (max_spin_duration - min_spin_duration)) + min_spin_duration;
         state_change_time = ros::Time::now() + ros::Duration(spin_duration);
@@ -90,7 +92,7 @@ int main(int argc, char **argv)
     else
     {
       msg.linear.x = 0.0;
-      msg.angular.z = angular_velocity * spin_direction;
+      msg.angular.z = angular_velocity;
     }
 
     vel_pub.publish(msg); // Publish the message
