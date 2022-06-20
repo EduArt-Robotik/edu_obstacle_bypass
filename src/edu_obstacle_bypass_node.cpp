@@ -63,8 +63,8 @@ int main(int argc, char **argv)
   float angular_velocity = 0.5;                                         // Set the angular velocity in rad/s
   float linear_velocity = 0.5;                                          // Set the linear velocity in 0.0 m/s
 
-  float min_spin_duration = 5.0       // Set the minimum spin duration in seconds
-  float max_spin_duration = 10.0       // Set the maximum spin duration in seconds
+  float min_spin_duration = 5.0;       // Set the minimum spin duration in seconds
+  float max_spin_duration = 10.0;       // Set the maximum spin duration in seconds
   float spin_duration = 0.0;                                            // Initialize the spin duration to 0.0 seconds
   float spin_direction = 1.0;                                           // Initialize the spin direction to 1 (clockwise)
 
