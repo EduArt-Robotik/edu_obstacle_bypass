@@ -55,20 +55,16 @@ int main(int argc, char **argv)
   ros::Rate loop_rate(10);                                              // Set the loop rate to 10 Hz
 
   scan_listener.range_ahead = 0.0;                                      // Initialize the range ahead to 0.0
-  float min_range_ahead = 1.2;                                          // Set the minimum range ahead in meters
-  float min_range_left = 0.5;                                           // Set the minimum range left in meters
-  float min_range_right = 0.5;                                          // Set the maximum range right in meters
-  const float DEG_TO_RAD = M_PI / 180.0;                                // Convert degrees to radians
+  float min_range_ahead = 1.5;                                          // Set the minimum range ahead in meters
+  float min_range_left = 0.8;                                           // Set the minimum range left in meters
+  float min_range_right = 0.8;                                          // Set the maximum range right in meters
   bool obstacle_detected = false;                                       // Initialize the obstacle detected flag to false
 
   float angular_velocity = 0.5;                                         // Set the angular velocity in rad/s
   float linear_velocity = 0.5;                                          // Set the linear velocity in 0.0 m/s
 
-  float min_spin_deg = 90.00 * DEG_TO_RAD;                              // Set the minimum spin angle in degrees
-  float max_spin_deg = 160.00 * DEG_TO_RAD;                             // Set the maximum spin angle in degrees
-
-  float min_spin_duration = min_spin_duration / angular_velocity;       // Set the minimum spin duration in seconds
-  float max_spin_duration = max_spin_duration / angular_velocity;       // Set the maximum spin duration in seconds
+  float min_spin_duration = 5.0       // Set the minimum spin duration in seconds
+  float max_spin_duration = 10.0       // Set the maximum spin duration in seconds
   float spin_duration = 0.0;                                            // Initialize the spin duration to 0.0 seconds
   float spin_direction = 1.0;                                           // Initialize the spin direction to 1 (clockwise)
 
